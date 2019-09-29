@@ -1,11 +1,12 @@
 {
-  "name": "stream-utils",
+  "name": "pipeline-utils",
   "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.8",
+    "@types/readable-stream": "^2.3.4",
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "ts-node": "^8.4.1",
@@ -13,5 +14,8 @@
   },
   "scripts": {
     "test": "jest"
+  },
+  "dependencies": {
+    "readable-stream": "^3.4.0"
   }
 }
