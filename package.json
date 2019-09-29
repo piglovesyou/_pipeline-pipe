@@ -1,21 +1,68 @@
 {
-  "name": "pipeline-utils",
-  "version": "0.0.1",
-  "main": "index.js",
-  "license": "MIT",
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=6.13.1",
+    "npm": ">=3.10.10"
+  },
+  "browserslist": [
+    ">1%",
+    "last 4 versions",
+    "Firefox ESR",
+    "not ie < 9"
+  ],
+  "dependencies": {
+    "@piglovesyou/parallel-transform": "../parallel-transform/piglovesyou-parallel-transform-v2.1.1.tgz",
+    "@types/readable-stream": "^2.3.4",
+    "readable-stream": "^3.4.0"
+  },
   "devDependencies": {
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.8",
-    "@types/readable-stream": "^2.3.4",
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
-    "ts-node": "^8.4.1",
     "typescript": "^3.6.3"
   },
-  "scripts": {
-    "test": "jest"
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npm run fix-js",
+      "git add --force"
+    ],
+    "*.{json,md,graphql}": [
+      "prettier --write",
+      "git add --force"
+    ],
+    "*.{css,less,styl,scss,sass,sss}": [
+      "stylelint --fix",
+      "git add --force"
+    ]
   },
-  "dependencies": {
-    "readable-stream": "^3.4.0"
+  "scripts": {
+    "lint-js": "eslint --ext .ts --ext .tsx --ignore-path .gitignore --ignore-pattern \"!**/.*\" .",
+    "lint-css": "stylelint \"src/**/*.{css,less,styl,scss,sass,sss}\"",
+    "lint": "yarn run lint-js && yarn run lint-css",
+    "fix-js": "yarn run lint-js --fix",
+    "fix-css": "yarn run lint-css --fix",
+    "fix": "yarn run fix-js && yarn run fix-css",
+    "codegen": "babel-node --extensions '.ts' tools/run codegen",
+    "test": "tsc && jest",
+    "test-watch": "yarn run test --watch --notify",
+    "test-cover": "yarn run test --coverage",
+    "coverage": "yarn run test-cover && opn coverage/lcov-report/index.html",
+    "clean": "babel-node --extensions '.ts' tools/run clean",
+    "copy": "babel-node --extensions '.ts' tools/run copy",
+    "bundle": "babel-node --extensions '.ts' tools/run bundle",
+    "build": "babel-node --extensions '.ts' tools/run build",
+    "build-stats": "yarn run build --release --analyse",
+    "deploy": "babel-node --extensions '.ts' tools/run deploy",
+    "render": "babel-node --extensions '.ts' tools/run render",
+    "serve": "babel-node --extensions '.ts' tools/run runServer",
+    "start": "babel-node --extensions '.ts' tools/run start"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
