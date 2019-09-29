@@ -1,6 +1,10 @@
 # pipeline-pipe
 
-Promise oriented Node Stream utilities.
+pipeilne-utils provide 3 useful functions for Async Stream task consuming.
+
+* [pipe](#pipe)
+* [pipeline](#pipeline)
+* [fromIterable](#fromIterable)
 
 `pipeline` function introduced in Node v10 indicates ...
 
@@ -44,10 +48,12 @@ Just a promisified version of require('stream').pipeline of Node Stream.
 ```js
 const {pipeline, pipe} = require('pipeline-pipe');
 
-await pipeline(
-  readable,
-  pipe((chunk) => chunk.replace('a', 'z')),
-);
+async function main() {
+  await pipeline(
+    readable,
+    pipe(chunk => chunk.replace('a', 'z')),
+  );
+}
 ``` 
 
 is equivalent to
@@ -55,7 +61,7 @@ is equivalent to
 ```js
 const {promisify} = require('util');
 const pipeline = promisify(require('stream').pipeline);
-const {pipe} = require('pipeline-pipe');
+const {pipe} = require('pipeline-utils');
 
 await pipeline(
   readable,
@@ -68,7 +74,7 @@ await pipeline(
 Just as `Readable.from` introduced in Node v12.3, `from` create a readable stream from `Iterable`. 
 
 ```js
-const {from} = require('pipeline-pipe');
+const {from} = require('pipeline-utils');
 
 const readable = from([2, 3, 4]);
 ```
