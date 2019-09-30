@@ -1,6 +1,6 @@
 # pipeline-pipe
 
-pipeline-pipe provides utilities to deal with Node stream more fluently.
+pipeline-pipe provides utilities to deal with Node Stream more casually.
 
 * [pipe](#pipefn-opts)
 * [pipeline](#pipelinestream-stream)
@@ -9,51 +9,26 @@ pipeline-pipe provides utilities to deal with Node stream more fluently.
 
 ## pipe(fn, opts)
 
-It creates a `Transform` object from a function as [through2](https://github.com/rvagg/through2) does, **only** it:
+It creates a `Transform` object from a function just as [through2](https://github.com/rvagg/through2) does, **only** it:
 
-* runs in 16 parallel by default (and configurable by `{maxParallel: number}`), thanks to [parallel-transform](https://github.com/mafintosh/parallel-transform)
-* accepts `Promise`d value to be returned, instead of calling `callback(undefined, value)`
+* runs in 16 parallel by default, as order remains, thanks to [parallel-transform](https://github.com/mafintosh/parallel-transform). It's configurable by `{maxParallel: number}` 
 * runs in `objectMode: true` by default (and configurable by `{objectMode: boolean}`)
+* accepts `Promise`d value to be returned, instead of calling `callback(undefined, value)`
 
-Example:
-
-```js
-import {pipe} from './src';
-
-console.time('parallel-transform');
-const t = pipe(data => {
-  return new Promise(resolve => {
-    // Some kind of async execution
-    setTimeout(resolve, 1000);
-  })
-}, {maxParallel: 2});
-
-t.on('finish', () => {
-  // Took about 2 seconds since it consumes two at once
-  console.timeEnd('parallel-transform');
-});
-
-// 3 streaming data
-t.write('yeah');
-t.write('yeah');
-t.write('yeah');
-
-t.end();
-```
-
-Another example to scrape HTML and store titles of them in DB:
+Example to scrape HTML and store titles of them in DB:
 
 ```js
-const {pipeline} = require('stream');
+const {pipeline, Readable} = require('stream');
 const {pipe} = require('pipeline-pipe');
 
 pipeline(
     Readable.from([1, 2, 3]),
-    pipe(postId => getPost(postId)),
-    pipe(json => json.postBody),
-    pipe(bodyHTML => parseHTML(bodyHTML)),
-    pipe(dom => dom.document.title),
-    pipe(title => storeInDB(title), {maxParallel: 4}),
+    pipe(postId => getPost(postId)),      // Async in 16 parallel
+    pipe(json => json.postBody),          // As Array.prototype.map
+    pipe(parseHTML),                      // Sync transform
+    pipe(dom => dom.document.title),      // As Array.prototype.map
+    pipe(title => title.includes('important') ? title : null),  // As Array.prototype.filter
+    pipe(title => storeInDB(title), {maxParallel: 4}),          // Async in 4 parallel
     (err) => {
         console.info('All done!');
     }
@@ -64,6 +39,16 @@ pipeline(
 
 A promisified version of `require('stream').pipeline` of Node Stream.
 
+It is equivalent to:
+
+```js
+const {promisify} = require('util');
+const {pipeline: _pipeline} = require('stream');
+const pipeline = promisify(_pipeline);
+```
+
+Example:
+
 ```js
 const {pipeline, pipe} = require('pipeline-pipe');
 
@@ -73,15 +58,9 @@ async function main() {
     pipe(chunk => chunk.replace('a', 'z')),
     pipe(chunk => storeInDB(chunk)),
   );
+  console.log('Done!');
 }
 ``` 
-
-`require('pipeline-pipe').pipeline` is equivalent to
-
-```js
-const {promisify} = require('util');
-const pipeline = promisify(require('stream').pipeline);
-```
 
 ## fromIter(iter)
 
