@@ -10,19 +10,31 @@ pipeilne-utils provide 3 useful functions for Async Stream task consuming.
 
 ## pipe
 
-It turns a function to Node `Transform` that accepts Promise return.
+It creates a `Transform` from a function, just as [through2](https://github.com/rvagg/through2) does, **only** it:
 
-Heavily inspired by npm `through` and `parallel-transform`. 
+* accepts `Promise`d value to be returned, instead of calling `callback(undefined, value)`
+* runs in `objectMode: true` by default (and configurable by `{objectMode: boolean}`)
+* runs in 16 parallel by default (and it's configurable by `{maxParallel: number}`)
+
+Example:
+
+
 
 ```js
+const {pipeline} = require('stream');
 const {pipe} = require('pipeline-pipe');
 
-const transformer = pipe(async function(chunk) {
-  this.push('additional');
-  this.push('additional');
-  await new Promise(resolve => setTimeout(resolve, 100));
-  return chunk.replace('a', 'z');
-})
+pipeline(
+    Readable.from([1, 2, 3]),
+    pipe(postId => getPost(postId)),
+    pipe(json => json.postBody),
+    pipe(bodyHTML => parseHTML(bodyHTML)),
+    pipe(dom => dom.document.title),
+    pipe(title => storeInDB(title), {maxParallel: 4}),
+    (err) => {
+        console.info('All done!');
+    }
+);
 ```
 
 is equivalent to
