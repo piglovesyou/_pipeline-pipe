@@ -1,10 +1,11 @@
 # pipeline-pipe
 
-pipeline-pipe provides useful functions for Node stream 
+pipeline-pipe provides utilities to deal with Node stream more fluently.
 
-* [pipe](#pipe)
-* [pipeline](#pipeline)
-* [fromIterable](#fromIterable)
+* [pipe](#pipefn-opts)
+* [pipeline](#pipelinestream-stream)
+* [fromIterable](#fromIteriter)
+* [split](#split)
 
 ## pipe(fn, opts)
 
@@ -59,7 +60,7 @@ pipeline(
 );
 ```
 
-## pipeline
+## pipeline(stream, stream, ...)
 
 A promisified version of `require('stream').pipeline` of Node Stream.
 
@@ -82,7 +83,7 @@ const {promisify} = require('util');
 const pipeline = promisify(require('stream').pipeline);
 ```
 
-## fromIter
+## fromIter(iter)
 
 Just as `Readable.from` introduced in Node v12.3, `from` create a readable stream from `Iterable`. 
 
@@ -113,6 +114,27 @@ const readable = new Readable({
     this.push(null);
   },
 });
+```
+
+## split()
+
+It returns a `Transform` object to split incoming `Array` into elements to following stream.
+
+```js
+const {pipeline} = require('stream');
+const {split} = require('pipeline-pipe');
+
+pipeline(
+    Readable.from([1, 2, 3]),
+    pipe(page => getPostsByPage(page)),
+    pipe(json => json.posts),
+    pipe(split()),
+    pipe(post => post.title),
+    pipe(title => storeInDB(title), {maxParallel: 4}),
+    (err) => {
+        console.info('All done!');
+    }
+);
 ```
 
 ## License
