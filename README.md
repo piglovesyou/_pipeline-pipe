@@ -18,6 +18,29 @@ It creates a `Transform` from a function, just as [through2](https://github.com/
 
 Example:
 
+```js
+import {pipe} from './src';
+
+console.time('parallel-transform');
+const t = pipe(data => {
+  return new Promise(resolve => {
+    // Some kind of async execution taking 1sec
+    setTimeout(resolve, 1000);
+  })
+}, {maxParallel: 2});
+
+t.on('finish', () => {
+  // Took about 2 seconds
+  console.timeEnd('parallel-transform');
+});
+
+// Three streaming data
+t.write('yeah');
+t.write('yeah');
+t.write('yeah');
+
+t.end();
+```
 
 
 ```js
