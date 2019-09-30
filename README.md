@@ -1,20 +1,18 @@
 # pipeline-pipe
 
-pipeilne-utils provide 3 useful functions for Async Stream task consuming.
+pipeline-pipe provides useful functions for Node stream 
 
 * [pipe](#pipe)
 * [pipeline](#pipeline)
 * [fromIterable](#fromIterable)
 
-`pipeline` function introduced in Node v10 indicates ...
+## pipe(fn, opts)
 
-## pipe
+It creates a `Transform` object from a function as [through2](https://github.com/rvagg/through2) does, **only** it:
 
-It creates a `Transform` from a function, just as [through2](https://github.com/rvagg/through2) does, **only** it:
-
+* runs in 16 parallel by default (and configurable by `{maxParallel: number}`), thanks to [parallel-transform](https://github.com/mafintosh/parallel-transform)
 * accepts `Promise`d value to be returned, instead of calling `callback(undefined, value)`
 * runs in `objectMode: true` by default (and configurable by `{objectMode: boolean}`)
-* runs in 16 parallel by default (and it's configurable by `{maxParallel: number}`)
 
 Example:
 
@@ -24,17 +22,17 @@ import {pipe} from './src';
 console.time('parallel-transform');
 const t = pipe(data => {
   return new Promise(resolve => {
-    // Some kind of async execution taking 1sec
+    // Some kind of async execution
     setTimeout(resolve, 1000);
   })
 }, {maxParallel: 2});
 
 t.on('finish', () => {
-  // Took about 2 seconds
+  // Took about 2 seconds since it consumes two at once
   console.timeEnd('parallel-transform');
 });
 
-// Three streaming data
+// 3 streaming data
 t.write('yeah');
 t.write('yeah');
 t.write('yeah');
@@ -42,6 +40,7 @@ t.write('yeah');
 t.end();
 ```
 
+Another example to scrape HTML and store titles of them in DB:
 
 ```js
 const {pipeline} = require('stream');
@@ -60,25 +59,9 @@ pipeline(
 );
 ```
 
-is equivalent to
-
-```js
-const {Transform} = require('stream');
-
-const transformer = new Transform({
-  transform(chunk, enc, callback) {
-    this.push('additional');
-    this.push('additional');
-    setTimeout(() => {
-      callback(null, chunk.replace('a', 'z'));
-    });
-  },
-});
-```
-
 ## pipeline
 
-Just a promisified version of require('stream').pipeline of Node Stream.
+A promisified version of `require('stream').pipeline` of Node Stream.
 
 ```js
 const {pipeline, pipe} = require('pipeline-pipe');
@@ -87,24 +70,19 @@ async function main() {
   await pipeline(
     readable,
     pipe(chunk => chunk.replace('a', 'z')),
+    pipe(chunk => storeInDB(chunk)),
   );
 }
 ``` 
 
-is equivalent to
+`require('pipeline-pipe').pipeline` is equivalent to
 
 ```js
 const {promisify} = require('util');
 const pipeline = promisify(require('stream').pipeline);
-const {pipe} = require('pipeline-utils');
-
-await pipeline(
-  readable,
-  pipe((chunk) => chunk.replace('a', 'z')),
-);
 ```
 
-## from
+## fromIter
 
 Just as `Readable.from` introduced in Node v12.3, `from` create a readable stream from `Iterable`. 
 
@@ -117,6 +95,7 @@ const readable = from([2, 3, 4]);
 is equivalent to
 
 ```js
+// Node v12.3+
 const {Readable} = require('stream')
 
 const readable = Readable.from([2, 3, 4]);
@@ -127,17 +106,11 @@ and is also almost equivalent to
 ```js
 const {Readable} = require('stream')
 
-const arr = [2, 3, 4];
-let currIndex = 0;
-const r = new Readable({
+const readable = new Readable({
   objectMode: true,
   read(size) {
-    for (let n of arr) {
-      const value = arr[currIndex];
-      const result = this.push(value || null);
-      if (result === false) return;
-      currIndex++;
-    }
+    for (let n of [2, 3, 4]) this.push(n);
+    this.push(null);
   },
 });
 ```
